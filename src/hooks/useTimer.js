@@ -1,22 +1,59 @@
-//starting timer
-//pausing timer
-//resetting it
-import { useState } from "react";
-import { useRef } from "react";
-export const useTimer=({timer})=>{
-    const value=parseInt(timer[0]+timer[1])*3600+parseInt(timer[3]+timer[4])*60+parseInt(timer[6]+timer[7]);
-    const[time,setTime]=useState(0);
-    const decreaseTimer=()=>{
-        console.log("decrement",time)
-        if(time!==0){
-            setTime((time)=>(time-1));
-        }
+import { useState, useRef, useEffect } from "react";
+
+export const useTimer = (initialTime) => {
+  const [timeInput, setTimeInput] = useState(initialTime || "00:00:00");
+  const [timer, setTimer] = useState(0);
+  const [pause, setPause] = useState(false);
+  const [start, setStart] = useState(false);
+  let interval = useRef(null);
+
+  useEffect(() => {
+    if (pause || timer === 0) {
+      clearInterval(interval.current);
+    } else if (start && !pause) {
+      startTimer();
     }
 
-    return {time,setTime,decreaseTimer};
+    return () => clearInterval(interval.current);
+  }, [pause, timer, start]);
 
+  const startTimer = () => {
+    interval.current = setInterval(() => {
+      setTimer((timer) => timer - 1);
+    }, 1000);
+  };
 
+  const onPause = () => {
+    setPause(!pause);
+  };
 
+  const onReset = () => {
+    setStart(false);
+    setTimer(convertTimeToSeconds(timeInput));
+    clearInterval(interval.current);
+  };
 
-    
-}
+  const handleStart = () => {
+    setStart(true);
+    setTimer(convertTimeToSeconds(timeInput));
+    startTimer();
+  };
+
+  const convertTimeToSeconds = (time) => {
+    const [hours, minutes, seconds] = time.split(":").map(Number);
+    return hours * 3600 + minutes * 60 + seconds;
+  };
+
+  return {
+    timeInput,
+    setTimeInput,
+    timer,
+    setTimer,
+    pause,
+    start,
+    onPause,
+    onReset,
+    handleStart,
+    convertTimeToSeconds,
+  };
+};

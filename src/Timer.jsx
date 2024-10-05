@@ -1,130 +1,127 @@
-import { Card } from 'primereact/card';
+import { Card } from "primereact/card";
 import { Button } from "primereact/button";
-import { useState,useEffect,useRef } from 'react';
 import { InputText } from "primereact/inputtext";
-import { useTimer } from './hooks/useTimer';
-const Timer=()=>{
-    const[timeInput,setTimeInput]=useState(0);
-    const[timer,setTimer]=useState(timeInput);
-    const[pause,setPause]=useState(false);
-    const[start,setStart]=useState(false);
-    let interval=useRef(null);
+import { useTimer } from "./hooks/useTimer";
 
+const Timer = () => {
+  const {
+    timeInput,
+    setTimeInput,
+    timer,
+    pause,
+    start,
+    onPause,
+    onReset,
+    handleStart,
+  } = useTimer("00:00:00");
 
-  useEffect(() => {
-    if (pause || timer === 0) {
-      clearInterval(interval.current);
-    } else if (start && !pause) {
-      startTimer();
+  const handleKeyPress = (e) => {
+    if (e.key === "Backspace") {
+      const currentValue = timeInput.replace(/:/g, "");
+      const newValue = currentValue.slice(0, -1).padStart(6, "0");
+      const formattedValue = newValue.replace(
+        /(\d{2})(\d{2})(\d{2})/,
+        "$1:$2:$3"
+      );
+      setTimeInput(formattedValue);
     }
-
-    return () => clearInterval(interval.current);
-  }, [pause, timer, start]);
-
-    // useEffect(()=>{
-    //     console.log("Rendered and print pause",pause);
-    //     if(pause){
-    //         return ()=>clearInterval(interval.current);
-    //     }
-    // },[pause])
-
-    const startTimer=()=>{
-      interval.current=setInterval(()=>{
-          setTimer((timer)=>(timer-1));
-      },1000)
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    } else {
+      const newValue = (timeInput.replace(/:/g, "") + e.key).slice(-6); //
+      const formattedValue = newValue.replace(
+        /(\d{2})(\d{2})(\d{2})/,
+        "$1:$2:$3"
+      );
+      setTimeInput(formattedValue);
     }
+  };
 
-    const onPause=()=>{
-        setPause(!pause);
-        console.log("onePause clicked", pause)
-    }
+  const formatTime = (time) => {
+    let hours = String(Math.floor(time / 3600)).padStart(2, "0");
+    let minutes = String(Math.floor((time % 3600) / 60)).padStart(2, "0");
+    let seconds = String(time % 60).padStart(2, "0");
+    return `${hours}:${minutes}:${seconds}`;
+  };
 
-    const getInput=(value)=>{
-        setTimeInput(value);
-        setTimer(value);
-    }
-
-    const onReset=()=>{
-      setStart(false);
-      setTimer(timeInput);
-      clearInterval(interval.current);
-
-    }
-    const handleTimer=()=>{
-        setStart(true);
-        startTimer();
-    }
-
-    console.log("Time: ",timer);
-    return (
-      <div className='card'>
-        <Card title='CountDown Timer'>
-          {!start?
+  return (
+    <div className='card'>
+      <Card title='CountDown Timer'>
+        {!start ? (
           <InputText
-           type="number"
+            type='text'
             value={timeInput}
-            onChange={(e) => getInput(e.target.value)}
+            onKeyDown={handleKeyPress}
             placeholder='00:00:00'
-          />:
-          <h3 className='text-xl' style={{fontSize:28}}>{timer}</h3>
-          }
-          {!start?
+            maxLength={8}
+          />
+        ) : (
+          <h3 className='text-xl' style={{ fontSize: 28 }}>
+            {formatTime(timer)}
+          </h3>
+        )}
+        {!start ? (
           <Button
             style={{
               width: "80%",
               borderRadius: "18px",
               alignItems: "center",
               justifyContent: "center",
-              marginTop:"20px",
+              marginTop: "20px",
             }}
-            onClick={() => handleTimer()}
+            onClick={handleStart}
           >
             <i className='pi pi-play' style={{ fontSize: "1rem" }}></i>
-          </Button>:
-         <div className='btn' style={{display:'flex',justifyContent:'space-between'}}>
-          {!pause?
+          </Button>
+        ) : (
+          <div
+            className='btn'
+            style={{ display: "flex", justifyContent: "space-between" }}
+          >
+            {!pause ? (
+              <Button
+                style={{
+                  width: "30%",
+                  borderRadius: "18px",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: "20px",
+                }}
+                onClick={onPause}
+              >
+                <i className='pi pi-pause' style={{ fontSize: "1rem" }}></i>
+              </Button>
+            ) : (
+              <Button
+                style={{
+                  width: "30%",
+                  borderRadius: "18px",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: "20px",
+                }}
+                onClick={onPause}
+              >
+                <i className='pi pi-play' style={{ fontSize: "1rem" }}></i>
+              </Button>
+            )}
             <Button
               style={{
                 width: "30%",
                 borderRadius: "18px",
-                alignItems: "center", 
+                alignItems: "center",
                 justifyContent: "center",
                 marginTop: "20px",
               }}
-              onClick={() => onPause()}
-            >
-              <i className='pi pi-pause' style={{ fontSize: "1rem" }}></i>
-             </Button> 
-             :
-             <Button
-                  style={{
-                    width: "30%",
-                    borderRadius: "18px",
-                    alignItems: "center", // Centers vertically
-                    justifyContent: "center",
-                    marginTop: "20px",
-                  }}
-                  onClick={() => onPause()}
-                >
-                  <i className='pi pi-play' style={{ fontSize: "1rem" }}></i>
-                </Button>}
-            <Button
-              style={{
-                width: "30%",
-                borderRadius: "18px",
-                alignItems: "center", // Centers vertically
-                justifyContent: "center",
-                marginTop: "20px",
-              }}
-              onClick={() => onReset()}
+              onClick={onReset}
             >
               <i className='pi pi-refresh' style={{ fontSize: "1rem" }}></i>
             </Button>
-         </div>}
-          
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+};
 
-        </Card>
-      </div>
-    );
-}
 export default Timer;
